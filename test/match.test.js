@@ -40,6 +40,19 @@ test('unrelated song scores low', () => {
   assert.ok(s < 0.3, s);
 });
 
+test('same title by a different artist (cover) is not auto-accepted', () => {
+  const track = { name: '甲乙丙丁 (你我怎么两清)', artists: ['李佳薇'], duration: 210461 };
+  const s = m.scoreMatch(track, { name: '甲乙丙丁 (你我怎么两清)', artistName: '钟心妍', durationInMillis: 210000 });
+  assert.ok(m.confidence(s) === 'low', s);
+});
+
+test('artist alias in brackets matches', () => {
+  const track = { name: '雨过后的风景', artists: ['Dizzy Dizzo (蔡诗芸)'], album: '黑色彩虹', duration: 243133 };
+  const s = m.scoreMatch(track, { name: '雨过后的风景', artistName: '蔡诗芸', albumName: '黑色彩虹', durationInMillis: 243000 });
+  assert.strictEqual(m.confidence(s), 'high', String(s));
+  assert.deepStrictEqual(m.searchTerms(track)[0], '雨过后的风景 Dizzy Dizzo');
+});
+
 test('parseInput handles JSON export and plain text', () => {
   const json = m.parseInput(JSON.stringify({ playlist: { name: '我喜欢的音乐' }, tracks: [{ id: 1, name: 'a', artists: ['b'] }] }));
   assert.strictEqual(json.playlist.name, '我喜欢的音乐');

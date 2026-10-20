@@ -41,9 +41,14 @@ function dice(a, b) {
   return (2 * hit) / (a.length + b.length - 2);
 }
 
+// "Dizzy Dizzo (蔡诗芸)" 这类带括号别名的歌手，括号内外都算作候选名字
 function splitArtists(s) {
   return normalize(s)
     .split(/\s*(?:,|，|&|、|\/|;|\bfeat\.?|\bft\.?|\bx\b|\band\b|和)\s*/)
+    .flatMap(a => {
+      const inner = [...a.matchAll(/[(\[](.*?)[)\]]/g)].map(m => m[1]);
+      return [a, a.replace(/[(\[].*?[)\]]/g, ''), ...inner];
+    })
     .map(compact)
     .filter(Boolean);
 }
@@ -81,6 +86,8 @@ function scoreMatch(track, cand) {
   const srcText = track.name + ' ' + (track.album || '');
   const dstText = cand.name + ' ' + (cand.albumName || '');
   if (hasVersionWord(dstText) && !hasVersionWord(srcText)) score -= 0.15;
+  // 同名歌但歌手对不上，多半是翻唱，不应被默认勾选
+  if (srcArtists.length && artist < 0.3) score -= 0.2;
   return Math.max(0, Math.min(1, score));
 }
 
@@ -99,7 +106,7 @@ function confidence(score) {
 
 function searchTerms(track) {
   const core = normalize(track.name).replace(/[(\[【「（].*?[)\]】」）]/g, ' ').trim() || track.name;
-  const artist = (track.artists || [])[0] || '';
+  const artist = ((track.artists || [])[0] || '').replace(/[(（\[].*?[)）\]]/g, '').trim();
   const terms = [(core + ' ' + artist).trim(), core];
   return [...new Set(terms)];
 }

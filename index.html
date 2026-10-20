@@ -139,12 +139,22 @@
   }
 
   document.querySelectorAll('button.copy').forEach(btn => btn.addEventListener('click', async () => {
+    const text = code[btn.dataset.copy];
+    if (!text) return toast('脚本还没加载好，稍等再试');
+    let ok = false;
     try {
-      await navigator.clipboard.writeText(code[btn.dataset.copy]);
-      toast('已复制，去对应网页的控制台粘贴');
+      await navigator.clipboard.writeText(text);
+      ok = true;
     } catch (e) {
-      toast('复制失败');
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;left:-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      ok = document.execCommand('copy');
+      ta.remove();
     }
+    toast(ok ? '已复制，去对应网页的控制台粘贴' : '复制失败，请换个浏览器试试');
   }));
 </script>
 </body>
