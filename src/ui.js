@@ -1,5 +1,7 @@
 // 两个书签脚本共用的浮动面板与工具函数。面板放在 Shadow DOM 里，避免被页面样式干扰。
 
+const REPO_URL = 'https://github.com/SikeFix/netease-to-apple-music';
+
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 function esc(s) {
@@ -44,6 +46,10 @@ async function copyText(text) {
   }
 }
 
+function starHtml() {
+  return `<p class="star">觉得好用？去 <a href="${REPO_URL}" target="_blank">GitHub</a> 点个 ⭐ Star 支持一下，遇到问题也可以提 Issue。</p>`;
+}
+
 function createPanel(title) {
   const old = document.getElementById('ncm2am-host');
   if (old) old.remove();
@@ -85,12 +91,14 @@ function createPanel(title) {
   .tag { font-size: 11px; padding: 0 5px; border-radius: 4px; background: #f2f2f7; white-space: nowrap; }
   .tag.medium { background: #fff4d6; } .tag.low { background: #ffe1e1; } .tag.none { background: #e5e5ea; }
   a { color: #fa2d48; }
+  .star { margin-top: 12px; padding: 8px 10px; border-radius: 8px; background: #fff4d6; font-size: 12px; }
   @media (prefers-color-scheme: dark) {
     .panel { background: #1c1c1e; color: #f5f5f7; }
     select, input[type=text], textarea { background: #2c2c2e; border-color: #3a3a3c; }
     button.btn.secondary, .stats div, .bar, .tag { background: #2c2c2e; color: #f5f5f7; }
     .list, .row { border-color: #3a3a3c; }
     .muted { color: #98989d; }
+    .star { background: #3a3220; }
   }
 </style>
 <div class="panel"><header><b>${esc(title)}</b><button class="x" title="关闭">×</button></header><div class="body"></div></div>`;

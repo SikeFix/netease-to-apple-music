@@ -85,6 +85,11 @@ async function amAddToLibrary(ids, onProgress) {
   }
 }
 
+const SOURCE_LABELS = { netease: '网易云 · ', qq: 'QQ音乐 · ', kugou: '酷狗 · ' };
+function sourceLabel(data) {
+  return SOURCE_LABELS[data.source] || '';
+}
+
 function toCsv(rows) {
   const q = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
   return '﻿' + rows.map(r => r.map(q).join(',')).join('\n');
@@ -95,7 +100,7 @@ async function amMain() {
     if (confirm('这个书签需要在 Apple Music 网页版（music.apple.com）上点击。现在打开吗？')) location.href = 'https://music.apple.com/';
     return;
   }
-  const ui = createPanel('网易云 → Apple Music · 导入');
+  const ui = createPanel('歌单搬家 → Apple Music · 导入');
   const m = amKit();
 
   if (!m.isAuthorized) {
@@ -173,7 +178,7 @@ function showResults(ui, data, results) {
         <span class="tag ${x.level}">${levelName[x.level]}</span>
       </label>`).join('')}</div>` : ''}
     <p>歌单名称：</p>
-    <input type="text" id="name" value="${esc('网易云 · ' + (data.playlist.name || '我喜欢的音乐'))}">
+    <input type="text" id="name" value="${esc(sourceLabel(data) + (data.playlist.name || '我喜欢的音乐'))}">
     <label class="chk"><input type="checkbox" id="love" checked>同时把这些歌标记为「喜爱」</label>
     <label class="chk"><input type="checkbox" id="lib">同时加入资料库</label>
     <button class="btn" id="create">创建歌单</button>
@@ -181,7 +186,7 @@ function showResults(ui, data, results) {
     <div id="done"></div>`;
 
   ui.$('#csv').onclick = () => downloadFile('ncm2am-report.csv', toCsv([
-    ['网易云歌名', '网易云歌手', '专辑', '匹配结果', 'Apple Music 歌名', 'Apple Music 歌手', '分数', '链接'],
+    ['原歌名', '原歌手', '专辑', '匹配结果', 'Apple Music 歌名', 'Apple Music 歌手', '分数', '链接'],
     ...rows.map(x => [x.t.name, (x.t.artists || []).join('/'), x.t.album, levelName[x.level] || '可靠',
       x.r.name, x.r.artistName, x.r.score && x.r.score.toFixed(2), x.r.url]),
   ]), 'text/csv');
@@ -196,11 +201,12 @@ function showResults(ui, data, results) {
     const step = (label, d, total) => { doneEl.innerHTML = `<div class="bar"><i style="width:${d / total * 100}%"></i></div><p class="muted">${label} ${d} / ${total}</p>`; };
     ui.$('#create').disabled = true;
     try {
-      const name = ui.$('#name').value.trim() || '网易云歌单';
-      await amCreatePlaylist(name, `由 netease-to-apple-music 从网易云「${data.playlist.name || ''}」导入`, ids, (d, n) => step('添加到歌单', d, n));
+      const name = ui.$('#name').value.trim() || '导入的歌单';
+      await amCreatePlaylist(name, `由 netease-to-apple-music 从${sourceLabel(data).replace(' · ', '')}「${data.playlist.name || ''}」导入`, ids, (d, n) => step('添加到歌单', d, n));
       if (ui.$('#lib').checked) await amAddToLibrary(ids, (d, n) => step('加入资料库', d, n));
       if (ui.$('#love').checked) await amLoveSongs(ids, (d, n) => step('标记喜爱', d, n));
-      doneEl.innerHTML = `<p>🎉 完成！已把 <b>${ids.length}</b> 首歌加入歌单「${esc(name)}」。在资料库 → 歌单里可以看到（同步可能需要几分钟）。</p>`;
+      doneEl.innerHTML = `<p>🎉 完成！已把 <b>${ids.length}</b> 首歌加入歌单「${esc(name)}」。在资料库 → 歌单里可以看到（同步可能需要几分钟）。</p>
+        <p class="muted">Mac「音乐」App 里看不到？打开「设置 → 通用 → 同步资料库」。</p>${starHtml()}`;
     } catch (e) {
       ui.error(e);
     } finally {

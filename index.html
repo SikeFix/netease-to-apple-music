@@ -3,120 +3,236 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>网易云 → Apple Music</title>
-<meta name="description" content="把网易云音乐「我喜欢的音乐」和任意歌单一键迁移到 Apple Music。免费、开源、无需服务器，数据只在你的浏览器里。">
+<title>歌单搬家 · 网易云 / QQ 音乐 → Apple Music</title>
+<meta name="description" content="把网易云音乐、QQ 音乐、酷狗的「我喜欢」和歌单迁移到 Apple Music，也能导出给 Spotify / YouTube Music。免费、开源、无需服务器。">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
 <style>
   :root {
     --bg: #fbfbfd; --card: #fff; --text: #1d1d1f; --muted: #6e6e73; --line: #e5e5ea;
-    --accent: #fa2d48; --accent2: #e60026; --code: #f5f5f7;
+    --accent: #fa2d48; --accent2: #e60026; --code: #f5f5f7; --ok: #1a7f37; --warn: #9a6700; --no: #8e8e93;
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #000; --card: #1c1c1e; --text: #f5f5f7; --muted: #98989d; --line: #2c2c2e; --code: #2c2c2e; }
+    :root { --bg: #000; --card: #1c1c1e; --text: #f5f5f7; --muted: #98989d; --line: #2c2c2e; --code: #2c2c2e;
+      --ok: #3fb950; --warn: #d29922; }
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text);
     font: 16px/1.65 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif; }
-  main { max-width: 760px; margin: 0 auto; padding: 0 16px 64px; }
-  .hero { text-align: center; padding: 72px 0 40px; }
-  .hero h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.15; margin: 0 0 16px; letter-spacing: -0.02em; }
+  main { max-width: 800px; margin: 0 auto; padding: 0 16px 64px; }
+  nav { display: flex; justify-content: space-between; align-items: center; max-width: 800px; margin: 0 auto; padding: 14px 16px; }
+  nav b { font-size: 17px; }
+  .gh { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 99px;
+    color: var(--text); text-decoration: none; font-size: 14px; background: var(--card); }
+  .gh:hover { border-color: var(--accent); }
+  .gh svg { width: 16px; height: 16px; fill: currentColor; }
+  .hero { text-align: center; padding: 48px 0 32px; }
+  .hero h1 { font-size: clamp(30px, 6.5vw, 50px); line-height: 1.15; margin: 0 0 16px; letter-spacing: -0.02em; }
   .hero h1 span { background: linear-gradient(90deg, var(--accent2), var(--accent) 50%, #fc5c7d);
     -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .hero p { color: var(--muted); font-size: 18px; margin: 0 auto; max-width: 560px; }
+  .hero p { color: var(--muted); font-size: 18px; margin: 0 auto; max-width: 580px; }
   .badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
   .badges span { font-size: 13px; padding: 4px 12px; border-radius: 99px; background: var(--code); color: var(--muted); }
-  .step { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 24px; margin: 16px 0; }
-  .step h2 { font-size: 20px; margin: 0 0 8px; display: flex; gap: 12px; align-items: center; }
+  h2.sec { font-size: 24px; margin: 48px 0 8px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 24px; margin: 16px 0; }
+  .card h3 { font-size: 20px; margin: 0 0 8px; display: flex; gap: 12px; align-items: center; }
   .num { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: #fff;
     display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
-  .step p, .step li { color: var(--muted); }
-  .step p { margin: 8px 0; }
+  .card p, .card li { color: var(--muted); }
+  .card p { margin: 8px 0; }
+  .card ul { margin: 8px 0; padding-left: 20px; }
   .bm { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; margin: 8px 8px 4px 0; border-radius: 12px;
     background: var(--accent); color: #fff; text-decoration: none; font-weight: 600; cursor: grab; border: 2px dashed transparent; }
   .bm:hover { border-color: rgba(255,255,255,.6); }
   .bm.loading { opacity: .5; pointer-events: none; }
-  button.copy { padding: 10px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--code);
-    color: var(--text); font: inherit; cursor: pointer; }
+  button.sec-btn { padding: 8px 14px; margin: 4px 6px 4px 0; border-radius: 10px; border: 1px solid var(--line); background: var(--code);
+    color: var(--text); font: inherit; font-size: 14px; cursor: pointer; }
+  button.sec-btn:hover { border-color: var(--accent); }
   a { color: var(--accent); }
   kbd, code { font-family: ui-monospace, Menlo, monospace; font-size: .88em; background: var(--code); padding: 1px 6px; border-radius: 6px; }
-  details { margin: 10px 0; }
-  summary { cursor: pointer; font-weight: 600; }
-  .faq .step p { color: var(--text); }
-  .faq h3 { margin: 18px 0 4px; font-size: 16px; }
-  .faq h3:first-child { margin-top: 0; }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 13px; color: var(--muted); font-weight: 600; }
+  td small { color: var(--muted); display: block; }
+  .ok { color: var(--ok); font-weight: 600; } .warn { color: var(--warn); font-weight: 600; } .no { color: var(--no); }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 12px; }
+  .tabs button { padding: 6px 14px; border-radius: 99px; border: 1px solid var(--line); background: transparent; color: var(--muted);
+    font: inherit; font-size: 14px; cursor: pointer; }
+  .tabs button[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tabpanel[hidden] { display: none; }
+  .tabpanel ol { margin: 4px 0; padding-left: 20px; color: var(--muted); }
+  .tabpanel li { margin: 4px 0; }
+  textarea { width: 100%; height: 120px; margin: 8px 0; padding: 10px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--code); color: var(--text); font: 13px/1.5 ui-monospace, Menlo, monospace; resize: vertical; }
+  .muted { color: var(--muted); }
+  .note { padding: 12px 14px; border-radius: 12px; background: var(--code); font-size: 14px; color: var(--muted); }
+  .faq h4 { margin: 18px 0 4px; font-size: 16px; color: var(--text); }
+  .faq h4:first-child { margin-top: 0; }
+  .star-cta { text-align: center; margin: 48px 0 0; padding: 32px 16px; border-radius: 18px;
+    background: linear-gradient(135deg, rgba(250,45,72,.08), rgba(252,92,125,.12)); }
+  .star-cta h2 { margin: 0 0 8px; font-size: 22px; }
+  .star-cta p { color: var(--muted); margin: 0 0 16px; }
+  .star-cta .gh { font-size: 16px; padding: 10px 20px; background: var(--accent); color: #fff; border-color: var(--accent); }
   footer { text-align: center; color: var(--muted); font-size: 14px; margin-top: 40px; }
   .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--text); color: var(--bg);
-    padding: 8px 16px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+    padding: 8px 16px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: calc(100% - 32px); }
   .toast.show { opacity: 1; }
 </style>
 </head>
 <body>
+<nav>
+  <b>🎵 歌单搬家</b>
+  <a class="gh" href="https://github.com/SikeFix/netease-to-apple-music" target="_blank" rel="noopener">
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg>
+    Star <span class="star-count"></span>
+  </a>
+</nav>
 <main>
   <section class="hero">
-    <h1>把网易云的<span>❤️ 我喜欢</span><br>搬到 Apple Music</h1>
-    <p>两个书签，三步搞定。智能模糊匹配歌名、歌手和时长，自动建歌单，还能顺手标记「喜爱」。</p>
+    <h1>把<span>❤️ 我喜欢</span>的歌<br>搬到 Apple Music</h1>
+    <p>支持网易云音乐、QQ 音乐、酷狗。两个书签，三步搞定：智能模糊匹配、自动建歌单、顺手标记「喜爱」。</p>
     <div class="badges"><span>免费开源</span><span>无需服务器</span><span>不用开发者账号</span><span>支持私密歌单</span></div>
   </section>
 
-  <section class="step">
-    <h2><span class="num">0</span>把两个按钮拖到书签栏</h2>
-    <p>按 <kbd>⌘ ⇧ B</kbd>（Windows 为 <kbd>Ctrl ⇧ B</kbd>）显示书签栏，然后把下面两个按钮<strong>拖</strong>上去（直接点击没有用）。</p>
-    <a class="bm loading" id="bm-ncm" href="#" title="拖到书签栏">① 导出网易云</a>
-    <a class="bm loading" id="bm-am" href="#" title="拖到书签栏">② 导入 Apple Music</a>
-    <details>
-      <summary>拖不了？（Safari / 手机 / 书签被拦截）</summary>
-      <p>也可以复制代码，在对应网页按 <kbd>⌥ ⌘ J</kbd>（Windows 为 <kbd>F12</kbd>）打开控制台，粘贴后回车。Safari 需要先在「设置 → 高级」里打开「显示网页开发者功能」。</p>
-      <button class="copy" data-copy="ncm">复制 ① 的代码</button>
-      <button class="copy" data-copy="am">复制 ② 的代码</button>
-    </details>
-  </section>
+  <h2 class="sec">支持哪些平台</h2>
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>平台</th><th>导出（来源）</th><th>导入（目标）</th></tr></thead>
+      <tbody>
+        <tr><td>网易云音乐</td><td class="ok">✓ 完整支持<small>我喜欢、私密歌单、收藏的歌单</small></td><td class="no">—</td></tr>
+        <tr><td>QQ 音乐</td><td class="ok">✓ 支持<small>登录后读自己的歌单，或粘贴公开歌单链接</small></td><td class="no">—</td></tr>
+        <tr><td>酷狗音乐</td><td class="warn">实验性<small>读取网页版当前打开的排行榜 / 歌单页</small></td><td class="no">—</td></tr>
+        <tr><td>汽水 / 酷我 / 其他</td><td class="warn">粘贴文本<small>每行「歌名 - 歌手」，可用 <a href="https://github.com/Bistutu/GoMusic" target="_blank" rel="noopener">GoMusic</a> 生成</small></td><td class="no">—</td></tr>
+        <tr><td>Apple Music</td><td class="no">—</td><td class="ok">✓ 直接导入<small>建歌单、标记喜爱、加入资料库</small></td></tr>
+        <tr><td>Spotify / YouTube Music</td><td class="no">—</td><td class="warn">借助第三方<small>转成文本后用 TuneMyMusic / Spotlistr 导入</small></td></tr>
+      </tbody>
+    </table>
+  </div>
 
-  <section class="step">
-    <h2><span class="num">1</span>在网易云网页版导出</h2>
-    <p>打开 <a href="https://music.163.com/" target="_blank" rel="noopener">music.163.com</a> 并登录，点书签栏上的「① 导出网易云」。选择歌单（默认就是「我喜欢的音乐」），点<strong>导出</strong>，再点<strong>复制数据</strong>。</p>
-  </section>
-
-  <section class="step">
-    <h2><span class="num">2</span>在 Apple Music 网页版导入</h2>
-    <p>打开 <a href="https://music.apple.com/" target="_blank" rel="noopener">music.apple.com</a> 并登录（需要有效订阅），点「② 导入 Apple Music」，粘贴数据，点<strong>开始匹配</strong>。</p>
-  </section>
-
-  <section class="step">
-    <h2><span class="num">3</span>确认并创建歌单</h2>
-    <p>匹配完会分成<strong>可靠 / 较可信 / 存疑 / 未找到</strong>四档。确认一下拿不准的，点<strong>创建歌单</strong>。没匹配上的歌可以下载成 CSV 报告，之后手动补上。</p>
-  </section>
-
-  <section class="faq">
-    <h2 style="margin:48px 0 8px">常见问题</h2>
-    <div class="step">
-      <h3>安全吗？我的账号会被上传吗？</h3>
-      <p>不会。脚本只在你自己的浏览器里运行，用的是你在网易云和 Apple Music 网页上已经登录的状态，直接调用两边的官方接口。没有任何中间服务器，代码全部<a href="https://github.com/SikeFix/netease-to-apple-music">开源</a>，可以自己检查。</p>
-      <h3>为什么不用开发者账号？</h3>
-      <p>Apple Music 网页播放器本身就带了 MusicKit，脚本借用页面里现成的实例，所以不需要每年 99 美元的 Apple 开发者账号。这不是 Apple 公开的官方用法，如果 Apple 改版导致失效，欢迎提 Issue。</p>
-      <h3>匹配不准怎么办？</h3>
-      <p>匹配时会综合歌名（含网易云的译名）、歌手和时长打分，并降低 Live / Remix / 伴奏等版本的分数。国内版权的差异会导致部分歌在 Apple Music 上确实没有，这些歌会出现在报告里。</p>
-      <h3>中途断了？</h3>
-      <p>搜索结果缓存在 music.apple.com 的本地存储里，重新点一遍「开始匹配」会很快跳过已经搜过的歌。</p>
-      <h3>也有 QQ 音乐 / 汽水音乐的歌单？</h3>
-      <p>第 2 步也支持粘贴每行「歌名 - 歌手」的纯文本，可以先用 <a href="https://github.com/Bistutu/GoMusic" target="_blank" rel="noopener">GoMusic</a> 把歌单转成文本，再粘贴进来。</p>
+  <h2 class="sec">使用方法</h2>
+  <section class="card">
+    <h3><span class="num">0</span>安装两个书签</h3>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="desktop" aria-selected="true">Chrome / Edge / Firefox</button>
+      <button role="tab" data-tab="safari">Safari</button>
+      <button role="tab" data-tab="mobile">手机 / 平板</button>
     </div>
+    <div class="tabpanel" data-panel="desktop">
+      <ol>
+        <li>按 <kbd>⌘ ⇧ B</kbd>（Windows 为 <kbd>Ctrl ⇧ B</kbd>）显示书签栏</li>
+        <li>把下面两个按钮<strong>拖</strong>到书签栏上（直接点击没有用）</li>
+      </ol>
+    </div>
+    <div class="tabpanel" data-panel="safari" hidden>
+      <ol>
+        <li>按 <kbd>⌘ ⇧ B</kbd> 显示个人收藏栏，把下面两个按钮拖上去</li>
+        <li>如果拖不动：随便收藏一个网页 → 在书签上右键「编辑地址」→ 用下面「复制书签网址」得到的内容替换地址</li>
+      </ol>
+    </div>
+    <div class="tabpanel" data-panel="mobile" hidden>
+      <ol>
+        <li>点下面的「复制书签网址」</li>
+        <li>随便把一个网页加入书签，然后编辑这个书签，把<strong>网址</strong>整个替换成刚复制的内容，名字改成「导出歌单」</li>
+        <li>打开网易云 / Apple Music 网页版时，在浏览器里选「请求桌面网站」，再从书签里打开它</li>
+      </ol>
+      <p class="note">手机端是实验性支持，书签网址比较长，个别浏览器可能存不下。用电脑最稳。</p>
+    </div>
+    <a class="bm loading" id="bm-export" href="#" title="拖到书签栏">① 导出歌单</a>
+    <a class="bm loading" id="bm-import" href="#" title="拖到书签栏">② 导入 Apple Music</a>
+    <div>
+      <button class="sec-btn" data-copy="export" data-kind="url">复制 ① 书签网址</button>
+      <button class="sec-btn" data-copy="import" data-kind="url">复制 ② 书签网址</button>
+      <button class="sec-btn" data-copy="export" data-kind="code">复制 ① 控制台代码</button>
+      <button class="sec-btn" data-copy="import" data-kind="code">复制 ② 控制台代码</button>
+    </div>
+    <p class="note">书签用不了的话，也可以在对应网页按 <kbd>⌥ ⌘ J</kbd>（Windows 为 <kbd>F12</kbd>）打开控制台，粘贴「控制台代码」后回车。Safari 要先在「设置 → 高级」里勾选「显示网页开发者功能」。</p>
+  </section>
+
+  <section class="card">
+    <h3><span class="num">1</span>在原平台网页版导出</h3>
+    <p>登录后点「① 导出歌单」，它会自动识别你在哪个网站：</p>
+    <ul>
+      <li><a href="https://music.163.com/" target="_blank" rel="noopener">网易云 music.163.com</a>：默认选中「我喜欢的音乐」，也可以选其他歌单</li>
+      <li><a href="https://y.qq.com/" target="_blank" rel="noopener">QQ 音乐 y.qq.com</a>：登录后选歌单；或者先打开歌单页再点书签，会自动填好</li>
+      <li><a href="https://www.kugou.com/yy/html/rank.html" target="_blank" rel="noopener">酷狗 kugou.com</a>：打开排行榜或歌单页，点「读取当前页面」</li>
+    </ul>
+    <p>导出后点<strong>复制数据</strong>。</p>
+  </section>
+
+  <section class="card">
+    <h3><span class="num">2</span>导入到 Apple Music</h3>
+    <p>打开 <a href="https://music.apple.com/" target="_blank" rel="noopener">music.apple.com</a> 并登录（需要有效订阅），点「② 导入 Apple Music」，粘贴数据，点<strong>开始匹配</strong>。确认「较可信 / 存疑」的歌之后，点<strong>创建歌单</strong>。</p>
+    <p class="note">⚠️ 要在<strong>浏览器</strong>里的 Apple Music 网页版操作，Mac / Windows 上的「音乐」App 不能运行书签。导入完成后，App 里打开「设置 → 通用 → 同步资料库」，歌单几分钟内就会同步过去。</p>
+  </section>
+
+  <section class="card" id="convert">
+    <h3><span class="num">↗</span>导入到 Spotify / YouTube Music</h3>
+    <p>把第 1 步复制的数据粘贴到这里，转成每行「歌名 - 歌手」的文本，再交给第三方工具导入：</p>
+    <textarea id="convert-input" placeholder='粘贴导出的数据：{"source":"netease",...}'></textarea>
+    <button class="sec-btn" id="convert-btn">转换并复制文本</button>
+    <span id="convert-status" class="muted"></span>
+    <textarea id="convert-output" readonly hidden></textarea>
+    <p>然后打开 <a href="https://www.tunemymusic.com/zh-CN/transfer" target="_blank" rel="noopener">TuneMyMusic</a>（来源选「任意文本」）或 <a href="https://spotlistr.com/search/textbox" target="_blank" rel="noopener">Spotlistr</a>，粘贴文本，选 Spotify / YouTube Music 作为目标。</p>
+  </section>
+
+  <h2 class="sec">常见问题</h2>
+  <section class="card faq">
+    <h4>安全吗？我的账号会被上传吗？</h4>
+    <p>不会。脚本只在你自己的浏览器里运行，用的是你在各平台网页版上已经登录的状态，直接调用它们自己的接口，没有任何中间服务器。代码全部<a href="https://github.com/SikeFix/netease-to-apple-music" target="_blank" rel="noopener">开源</a>，可以自己检查。</p>
+    <h4>为什么不用开发者账号？</h4>
+    <p>Apple Music 网页播放器本身就带了 MusicKit，脚本借用页面里现成的实例，所以不需要每年 99 美元的 Apple 开发者账号。这不是 Apple 公开的官方用法，平台改版后可能失效，遇到问题欢迎提 Issue。</p>
+    <h4>匹配不准怎么办？</h4>
+    <p>匹配会综合歌名（含译名 / 别名）、歌手和时长打分；同名但歌手不同的翻唱、Live / Remix 版本会被降低分数，不会默认加入。因为版权差异，部分歌在 Apple Music 上确实没有，会出现在可下载的匹配报告里。</p>
+    <h4>中途断了？</h4>
+    <p>搜索结果缓存在 music.apple.com 的本地存储里，重新点一遍「开始匹配」会很快跳过已经搜过的歌。</p>
+    <h4>为什么 Spotify 不能直接导入？</h4>
+    <p>Spotify 的公开 API 对网页播放器的凭证限流很严，没法像 Apple Music 那样在网页里直接建歌单，所以先借助 TuneMyMusic / Spotlistr 这类第三方工具。</p>
+  </section>
+
+  <section class="star-cta">
+    <h2>帮到你了吗？</h2>
+    <p>点个 Star 让更多人找到它，也欢迎提 Issue 告诉我想支持哪个平台。</p>
+    <a class="gh" href="https://github.com/SikeFix/netease-to-apple-music" target="_blank" rel="noopener">⭐ 在 GitHub 上 Star <span class="star-count"></span></a>
   </section>
 
   <footer>
-    <a href="https://github.com/SikeFix/netease-to-apple-music">GitHub</a> · MIT License · 与网易云音乐、Apple 均无关联
+    <a href="https://github.com/SikeFix/netease-to-apple-music">GitHub</a> · MIT License · 与网易云音乐、QQ 音乐、酷狗、Apple 均无关联
   </footer>
 </main>
 <div class="toast" id="toast"></div>
 
+<script src="src/match.js"></script>
 <script>
-  const bundles = { ncm: ['src/ui.js', 'src/netease.js'], am: ['src/ui.js', 'src/match.js', 'src/apple.js'] };
+  // 与 test/match.test.js 里的 EXPORT_BUNDLE / IMPORT_BUNDLE 保持一致
+  const bundles = {
+    export: ['src/ui.js', 'src/match.js', 'src/sources/netease.js', 'src/sources/qq.js', 'src/sources/kugou.js', 'src/export.js'],
+    import: ['src/ui.js', 'src/match.js', 'src/apple.js'],
+  };
   const code = {};
+  const urls = {};
 
   function toast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 1800);
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  async function copy(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;left:-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      ta.remove();
+      return ok;
+    }
   }
 
   async function build(key) {
@@ -125,8 +241,9 @@
       return r.text();
     })));
     code[key] = '(() => {\n' + parts.join('\n') + '\n})();';
+    urls[key] = 'javascript:' + encodeURIComponent(code[key]);
     const a = document.getElementById('bm-' + key);
-    a.href = 'javascript:' + encodeURIComponent(code[key]);
+    a.href = urls[key];
     a.classList.remove('loading');
   }
 
@@ -138,24 +255,45 @@
     });
   }
 
-  document.querySelectorAll('button.copy').forEach(btn => btn.addEventListener('click', async () => {
-    const text = code[btn.dataset.copy];
+  document.querySelectorAll('button[data-copy]').forEach(btn => btn.addEventListener('click', async () => {
+    const text = (btn.dataset.kind === 'url' ? urls : code)[btn.dataset.copy];
     if (!text) return toast('脚本还没加载好，稍等再试');
-    let ok = false;
-    try {
-      await navigator.clipboard.writeText(text);
-      ok = true;
-    } catch (e) {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.cssText = 'position:fixed;left:-9999px';
-      document.body.appendChild(ta);
-      ta.select();
-      ok = document.execCommand('copy');
-      ta.remove();
-    }
-    toast(ok ? '已复制，去对应网页的控制台粘贴' : '复制失败，请换个浏览器试试');
+    const ok = await copy(text);
+    toast(!ok ? '复制失败，请换个浏览器试试'
+      : btn.dataset.kind === 'url' ? '已复制，去书签的「网址」里粘贴' : '已复制，去对应网页的控制台粘贴');
   }));
+
+  document.querySelectorAll('[role="tab"]').forEach(tab => tab.addEventListener('click', () => {
+    document.querySelectorAll('[role="tab"]').forEach(t => t.setAttribute('aria-selected', t === tab));
+    document.querySelectorAll('.tabpanel').forEach(p => { p.hidden = p.dataset.panel !== tab.dataset.tab; });
+  }));
+  if (/iPhone|iPad|Android/i.test(navigator.userAgent)) document.querySelector('[data-tab="mobile"]').click();
+  else if (/^((?!chrome|android).)*safari/i.test(navigator.userAgent)) document.querySelector('[data-tab="safari"]').click();
+
+  document.getElementById('convert-btn').addEventListener('click', async () => {
+    const status = document.getElementById('convert-status');
+    try {
+      const data = parseInput(document.getElementById('convert-input').value);
+      if (!data.tracks || !data.tracks.length) throw new Error('没有读到歌曲');
+      const text = tracksToText(data.tracks);
+      const output = document.getElementById('convert-output');
+      output.value = text;
+      output.hidden = false;
+      const ok = await copy(text);
+      status.textContent = ok ? ` 已复制 ${data.tracks.length} 首 ✓` : ` 共 ${data.tracks.length} 首，自动复制失败，请手动复制下面的文本`;
+    } catch (e) {
+      status.textContent = ' 数据格式不对：' + e.message;
+    }
+  });
+
+  fetch('https://api.github.com/repos/SikeFix/netease-to-apple-music')
+    .then(r => r.ok ? r.json() : null)
+    .then(j => {
+      if (j && typeof j.stargazers_count === 'number') {
+        document.querySelectorAll('.star-count').forEach(s => { s.textContent = j.stargazers_count; });
+      }
+    })
+    .catch(() => {});
 </script>
 </body>
 </html>

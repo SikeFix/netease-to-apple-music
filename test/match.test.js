@@ -4,6 +4,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const m = require('../src/match.js');
 
+// 与 index.html 里的 bundles 保持一致
+const EXPORT_BUNDLE = ['src/ui.js', 'src/match.js', 'src/sources/netease.js', 'src/sources/qq.js', 'src/sources/kugou.js', 'src/export.js'];
+const IMPORT_BUNDLE = ['src/ui.js', 'src/match.js', 'src/apple.js'];
+
 test('coreTitle strips brackets, suffixes and feat', () => {
   assert.strictEqual(m.coreTitle('晴天 (Live)'), '晴天');
   assert.strictEqual(m.coreTitle('Shape of You - Acoustic'), 'shapeofyou');
@@ -63,9 +67,25 @@ test('parseInput handles JSON export and plain text', () => {
   assert.deepStrictEqual(txt.tracks[2].artists, []);
 });
 
+test('parseInput keeps the source platform', () => {
+  assert.strictEqual(m.parseInput('{"source":"qq","tracks":[]}').source, 'qq');
+});
+
+test('tracksToText produces "title - artists" lines', () => {
+  assert.strictEqual(m.tracksToText([{ name: '晴天', artists: ['周杰伦'] }, { name: 'X', artists: ['A', 'B'] }, { name: 'Solo', artists: [] }]),
+    '晴天 - 周杰伦\nX - A, B\nSolo');
+});
+
+test('kugou FileName parsing', () => {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src/sources/kugou.js'), 'utf8');
+  const kgParseFeature = new Function(src + '; return kgParseFeature;')();
+  const t = kgParseFeature({ FileName: '雪山阿木、7past - 我听人说思念像风', timeLen: 192.5, Hash: 'H' });
+  assert.deepStrictEqual([t.name, t.artists, t.duration], ['我听人说思念像风', ['雪山阿木', '7past'], 192500]);
+});
+
 test('bookmarklet bundles are valid JavaScript', () => {
-  const read = f => fs.readFileSync(path.join(__dirname, '..', 'src', f), 'utf8');
-  for (const files of [['ui.js', 'netease.js'], ['ui.js', 'match.js', 'apple.js']]) {
+  const read = f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+  for (const files of [EXPORT_BUNDLE, IMPORT_BUNDLE]) {
     const code = files.map(read).join('\n');
     assert.doesNotThrow(() => new Function(code), files.join('+'));
   }

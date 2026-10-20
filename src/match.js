@@ -1,4 +1,4 @@
-// 歌曲匹配：把网易云曲目和 Apple Music 搜索结果做模糊打分。
+// 歌曲匹配：把来源平台的曲目和 Apple Music 搜索结果做模糊打分。
 // 纯函数，无 DOM 依赖，可在 Node 中测试。
 
 const VERSION_WORDS = ['live', 'remix', 'instrumental', 'karaoke', 'acoustic', 'demo', 'cover',
@@ -111,14 +111,14 @@ function searchTerms(track) {
   return [...new Set(terms)];
 }
 
-// 解析导入内容：网易云导出的 JSON，或每行 "歌名 - 歌手" 的纯文本（兼容 GoMusic 等工具的输出）
+// 解析导入内容：导出书签生成的 JSON，或每行 "歌名 - 歌手" 的纯文本（兼容 GoMusic 等工具的输出）
 function parseInput(text) {
   text = String(text || '').trim();
   if (!text) return { playlist: { name: '导入的歌单' }, tracks: [] };
   if (text[0] === '{' || text[0] === '[') {
     const data = JSON.parse(text);
     const tracks = Array.isArray(data) ? data : data.tracks;
-    return { playlist: (data && data.playlist) || { name: '导入的歌单' }, tracks };
+    return { source: data && data.source, playlist: (data && data.playlist) || { name: '导入的歌单' }, tracks };
   }
   const tracks = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map((line, i) => {
     const idx = line.lastIndexOf(' - ');
@@ -129,6 +129,11 @@ function parseInput(text) {
   return { playlist: { name: '导入的歌单' }, tracks };
 }
 
+// 转成 TuneMyMusic / Spotlistr 等工具能识别的「歌名 - 歌手」文本
+function tracksToText(tracks) {
+  return tracks.map(t => `${t.name} - ${(t.artists || []).join(', ')}`.replace(/ - $/, '')).join('\n');
+}
+
 if (typeof module !== 'undefined') {
-  module.exports = { normalize, coreTitle, dice, splitArtists, scoreMatch, pickBest, confidence, searchTerms, parseInput };
+  module.exports = { normalize, coreTitle, dice, splitArtists, scoreMatch, pickBest, confidence, searchTerms, parseInput, tracksToText };
 }
