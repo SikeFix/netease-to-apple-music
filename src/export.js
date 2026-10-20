@@ -55,7 +55,8 @@ async function exportPageOnly(ui, source) {
 }
 
 async function exportMain() {
-  const source = SOURCES.find(s => s.test(location.hostname));
+  // 不用 Array.prototype.find：酷狗网页把它删掉了
+  const source = SOURCES.filter(s => s.test(location.hostname))[0];
   if (!source) return exportUnsupported();
   const ui = createPanel(`${source.name} · 导出歌单`);
   if (source.pageOnly) return exportPageOnly(ui, source);
