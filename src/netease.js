@@ -29,12 +29,12 @@ async function ncmExportPlaylist(pid, onProgress) {
   const pl = detail.playlist;
   const ids = pl.trackIds.map(t => t.id);
   const byId = new Map();
-  for (let i = 0; i < ids.length; i += 500) {
-    const batch = ids.slice(i, i + 500);
-    const body = new URLSearchParams({ c: JSON.stringify(batch.map(id => ({ id }))) });
-    const j = await ncmApi('/api/v3/song/detail', { method: 'POST', body });
+  // 用 GET：网易云页面会改写 fetch 的 POST 请求体，导致接口返回 400
+  for (let i = 0; i < ids.length; i += 300) {
+    const c = JSON.stringify(ids.slice(i, i + 300).map(id => ({ id })));
+    const j = await ncmApi('/api/v3/song/detail?c=' + encodeURIComponent(c));
     for (const s of j.songs) byId.set(s.id, s);
-    onProgress(Math.min(i + 500, ids.length), ids.length);
+    onProgress(Math.min(i + 300, ids.length), ids.length);
   }
   const tracks = ids.map(id => byId.get(id)).filter(Boolean).map(s => ({
     id: s.id,
